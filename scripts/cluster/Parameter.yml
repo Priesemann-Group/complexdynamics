@@ -1,0 +1,28 @@
+Date: 2023-11-20
+Control:
+  tau:
+    min: 0.01 
+    max: 60
+    res: 0.03 #0.25 #choose resolution s.t. an approx. equal number of tau and M_max are testet
+  M_max:
+    min: 0.75
+    max: 1
+    res: 0.000125 #0.001 #choose resolution s.t. an approx. equal number of tau and M_max are testet
+Model:
+  beta_0: 0.5
+  gamma: 0.1
+  nu: 0.01
+  tau: 20
+  M_max: 0.81
+  s: 0.25
+  omega: 0.017453292519943295
+  kappa: 1000
+  epsilon: 0.00025
+  h_thres: 0.001
+Integration:
+  ntrans: 100   # no. of transient periods (in years)
+  nattr: 100    # no. of points on the attractor in the Poincare section (in years)
+  nitter: 20    # no. of initial conditions (per I,S)
+  delta: 0.00000001 # initial length of perturbation
+PatchNumber: 100 # no. of patches per dimension. Total number of jobs needs to be square of this
+

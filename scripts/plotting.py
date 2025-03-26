@@ -1,5 +1,6 @@
 import matplotlib.pyplot as plt
 import matplotlib as mpl
+from matplotlib import colors
 import pandas as pd
 import numpy as np
 from params import cols
@@ -18,13 +19,12 @@ def set_rcParams():
     return None
 
 
-# Sets labels to the axis 
 def setabc(ax,lab,x=-0.25,y=1.1):
     ax.text(x,y,f'({lab})', size=8, color='black', transform=ax.transAxes)
     return None
 
 
-def plot_stability(ax,hopfcurve,mmaxvals,tauvals,alpha=1,exponent=False):
+def plot_stability(ax,hopfcurve,mmaxvals,tauvals,alpha=1):
     
     stability = pd.read_csv(hopfcurve, sep=',', header=0)
     
@@ -66,3 +66,86 @@ def plot_metastability(ax,summer,winter,mmaxvals,tauvals,alpha=1):
     ax.set_xlabel(r'mitigation delay $\tau$')
     ax.set_ylabel('maximal mitigation $m_{max}$')
     return None
+
+
+
+def plot_arnold(ax,res,cmap,param='a',tol=0.025,windingnumbers=[1,3/2,2]):
+
+    tauline = np.sort(list(set(res['tau'])))
+    sline = np.flip(np.sort(list(set(res[param]))))
+
+    M = np.zeros([len(sline),len(tauline)])
+
+    for i,tau in enumerate(tauline):
+        subres = res[res['tau']==tau]
+        for j,s in enumerate(sline):
+            subsubres = subres[subres[param]==s]
+
+            W = np.array(subsubres['W'])[0]
+            for t in windingnumbers:
+                if abs(W-t) <=tol:
+                    M[j,i] = t
+                    
+    Mrev = M.copy()
+    for j,t in enumerate(windingnumbers):
+        Mrev[M==t] = j+1
+    Mrev[M==0] = len(windingnumbers)+2
+    
+    show = ax.imshow(Mrev,aspect='auto', extent=(tauline.min(), tauline.max(), sline.min(), sline.max()), \
+          cmap=cmap,interpolation='None')
+               
+    return show, Mrev, tauline, sline
+
+
+
+def plot_bifurcation(res,ax,param,s=0.01,lw=0.4,shift=False,color='royalblue',marker='.'):
+    
+    line = np.sort(list(set(res[param])))
+    
+    for p in line:
+        subres = res[res[param]==p]
+        peaks = subres['i']
+        
+        
+        ax.scatter(p*np.ones(len(peaks)),100*peaks,c=color,s=s,linewidths=lw,marker=marker)
+        ax.set_ylabel('$I_k$ (%)')
+        ax.set_xlabel(param)
+        
+    return None
+
+
+
+def plot_perturbation(ax,res,variable='W',param='Mmax',sigma_tau=4, sigma_Mmax=0.03, relative=False, absolute=False):
+    
+    tauline = np.sort(list(set(res['tau'])))
+    Mmaxline = np.sort(list(set(res[param])))
+
+    W = res[variable].values.reshape((len(Mmaxline), len(tauline)))
+                    
+    weights = multivariate_normal.pdf(res[['tau','Mmax']], mean=[tauline.mean(),Mmaxline.mean()], cov=np.diag([sigma_tau**2, sigma_Mmax**2]))
+    weights = weights.reshape((len(Mmaxline), len(tauline)))/weights.sum()
+    
+    N_tau_padding = max(int(len(tauline)/5), 50)
+    N_Mmax_padding = max(int(len(Mmaxline)/5), 50)
+    W_padded = np.pad(W, ((N_tau_padding,N_tau_padding),(N_Mmax_padding,N_Mmax_padding)), mode='edge')
+    
+    averages = signal.fftconvolve(W_padded, weights, mode='same')
+    averages = averages[N_tau_padding: -N_tau_padding, N_Mmax_padding: -N_Mmax_padding]
+    if not relative:
+        difference = averages-W
+    else:
+        difference = (averages-W)/W
+    
+    if absolute:
+        difference=np.abs(difference)
+    
+    ### Plot
+    to_plot = difference
+    lim = vmin=np.abs(to_plot).max()
+    
+    divnorm=colors.TwoSlopeNorm(vmin=np.min(to_plot[::-1,:]), vcenter=0, vmax=np.max(to_plot[::-1,:]))
+    show_pert = ax.imshow(to_plot[::-1,:],aspect='auto',extent=(tauline.min(), tauline.max(), Mmaxline.min(), Mmaxline.max()),\
+                      cmap='RdBu_r',norm=divnorm,interpolation='None')
+    
+    return show_pert
+
