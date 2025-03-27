@@ -6,6 +6,8 @@ import numpy as np
 from params import cols
 from scipy.stats import multivariate_normal
 from scipy import signal
+from pylab import cm
+
 
 def set_rcParams():
     mpl.rcParams["axes.spines.right"] = False
@@ -22,6 +24,16 @@ def set_rcParams():
 def setabc(ax,lab,x=-0.25,y=1.1):
     ax.text(x,y,f'({lab})', size=8, color='black', transform=ax.transAxes)
     return None
+
+def get_arnold_cmap():
+    windingnumbers = [1,5/4,4/3,3/2,5/3,2,5/2,3]
+    windingnumberlabels = ['$1$',r'$\frac{5}{4}$',r'$\frac{4}{3}$',r'$\frac{3}{2}$',r'$\frac{5}{3}$','$2$',r'$\frac{5}{2}$','$3$','']
+
+    cmap = cm.get_cmap('YlGnBu',len(windingnumbers)+1)
+    cmaplist = [cmap(i) for i in range(cmap.N)]
+    cmaplist[-1] = (0, 0, 0, 1.0)
+    return windingnumbers, windingnumberlabels, mpl.colors.LinearSegmentedColormap.from_list('Custom cmap', cmaplist, cmap.N)
+
 
 
 def plot_stability(ax,hopfcurve,mmaxvals,tauvals,alpha=1):
