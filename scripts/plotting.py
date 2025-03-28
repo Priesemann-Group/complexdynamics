@@ -161,3 +161,27 @@ def plot_perturbation(ax,res,variable='W',param='Mmax',sigma_tau=4, sigma_Mmax=0
     
     return show_pert
 
+def parameter_space_histogram(ax, tau, Mmax, data, column, weight={'type':'gaussian', 'sigma_tau':4, 'sigma_Mmax':0.015}, global_range=True, bins=30, normalized=False, cumulative=True, density=True, histtype='step', color='black', lw=1, ls='-', label=None):
+    data = data.dropna(subset = [column])
+    if weight['type'] == 'gaussian':
+        weights = multivariate_normal.pdf(data[['tau','Mmax']], mean=[tau,Mmax], cov=np.diag([weight['sigma_tau']**2, weight['sigma_Mmax']**2]))
+    if weight['type'] == 'uniform':
+        weights = None
+        loc_tau = (data['tau'] >= tau-.5*weight['delta_tau']) & (data['tau'] < tau+.5*weight['delta_tau'])
+        loc_Mmax = (data['Mmax'] >= Mmax-.5*weight['delta_Mmax']) & (data['Mmax'] < Mmax+.5*weight['delta_Mmax'])
+        data = data.loc[loc_tau & loc_Mmax]
+
+    data_to_plot = data[column]
+    mean = np.average(data_to_plot, weights=weights/weights.sum())
+    if normalized:
+        #print(np.average(data_to_plot, weights=weights/weights.sum()))
+        data_to_plot /= mean
+        #print(data_to_plot.min(), data_to_plot.max())
+
+    limits = None
+    if global_range:
+        limits = [data_to_plot.min(), data_to_plot.max()]
+
+    ax.hist(data_to_plot, weights=weights, density=density, cumulative=cumulative, histtype=histtype, bins=bins, range=limits, color=color, linewidth=lw, linestyle=ls, label=label)
+
+    return mean
