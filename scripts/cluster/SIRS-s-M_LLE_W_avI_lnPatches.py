@@ -109,7 +109,7 @@ def run_model(p, y_0, ntrans, nattr, d_0, nitter):
     for i in range(nitter):
         #integration
         sol = solve_ivp(dSIR_withJacoby_ODE_partial, (0, tend_span), u_0, t_eval=tspan, method='DOP853', rtol=1e-7, atol=1e-10)['y'].T
-        #need to use DOP853 method in solve_ivp for accurate computation 
+        #sol = odeint(dSIR_withJacoby_ODE_partial, u_0, tspan)
         
         # Winding Number, average infections:
         inf_vec = sol[:,1]
