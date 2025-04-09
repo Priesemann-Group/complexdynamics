@@ -1,0 +1,1 @@
+C implementations of different types of behavioral feedback as defined in Appendix C3 of the article. The default is the softplus function.
